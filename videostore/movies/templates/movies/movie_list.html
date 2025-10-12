@@ -1,0 +1,38 @@
+{% extends "movies/base.html" %}
+{% block content %}
+<table class="table table-striped align-middle">
+  <thead>
+    <tr>
+      <th>MovieID</th>
+      <th>Title</th>
+      <th>Director</th>
+      <th>Actor 1</th>
+      <th>Actor 2</th>
+      <th>Genre</th>
+      <th>Year</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for m in movies %}
+    <tr>
+      <td>{{ m.movie_id }}</td>
+      <td><a href="{% url 'movies:movie_detail' m.pk %}">{{ m.movie_title }}</a></td>
+      <td>{{ m.director_name }}</td>
+      <td>{{ m.actor1_name }}</td>
+      <td>{{ m.actor2_name|default:"—" }}</td>
+      <td>{{ m.movie_genre }}</td>
+      <td>{{ m.release_year }}</td>
+      <td>
+        <a class="btn btn-sm btn-outline-secondary" href="{% url 'movies:movie_update' m.pk %}">Edit</a>
+        <a class="btn btn-sm btn-outline-danger" href="{% url 'movies:movie_delete' m.pk %}">Delete</a>
+      </td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="8" class="text-muted">No movies yet.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+
+

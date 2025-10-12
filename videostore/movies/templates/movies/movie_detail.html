@@ -1,0 +1,17 @@
+{% extends "movies/base.html" %}
+{% block content %}
+<div class="card p-3">
+  <h2 class="h4 mb-3">{{ movie.movie_title }} ({{ movie.release_year }})</h2>
+  <ul class="list-unstyled">
+    <li><strong>MovieID:</strong> {{ movie.movie_id }}</li>
+    <li><strong>Director:</strong> {{ movie.director_name }}</li>
+    <li><strong>Actor 1:</strong> {{ movie.actor1_name }}</li>
+    <li><strong>Actor 2:</strong> {{ movie.actor2_name|default:"—" }}</li>
+    <li><strong>Genre:</strong> {{ movie.movie_genre }}</li>
+  </ul>
+  <div class="mt-3 d-flex gap-2">
+    <a class="btn btn-secondary" href="{% url 'movies:movie_update' movie.pk %}">Edit</a>
+    <a class="btn btn-danger" href="{% url 'movies:movie_delete' movie.pk %}">Delete</a>
+  </div>
+</div>
+{% endblock %}
