@@ -34,6 +34,7 @@ pipeline {
             steps {
                 bat '''
                     REM === Apply the updated deployment manifest ===
+                    cd videostore
                     kubectl apply -f deployment.yaml
 
                     REM === Ensure the rollout completes ===
