@@ -1,0 +1,68 @@
+pipeline {
+  agent any
+
+  environment {
+    MINIKUBE = 'C:\\Users\\moham\\minikube.exe'   // full path so PATH isn't needed
+  }
+
+  triggers {
+    pollSCM('H/2 * * * *') // every ~2 minutes
+  }
+
+  stages {
+
+    stage('Show workspace') {
+      steps {
+        bat '''
+        echo ==== ROOT LISTING ====
+        dir
+        if exist videostore (
+          echo ==== videostore/ LISTING ====
+          dir videostore
+        )
+        '''
+      }
+    }
+
+    stage('Build Docker Image') {
+      steps {
+        bat '''
+        echo Building Django image...
+        if exist Dockerfile (
+          docker build -t mydjangoapp:latest .
+        ) else (
+          docker build -t mydjangoapp:latest -f videostore\\Dockerfile videostore
+        )
+        echo Loading image into Minikube...
+        "%MINIKUBE%" image load mydjangoapp:latest
+        '''
+      }
+    }
+
+    stage('Deploy to Minikube') {
+      steps {
+        bat '''
+        echo Applying Kubernetes manifests...
+        if exist deployment.yaml (
+          "%MINIKUBE%" kubectl -- apply -f deployment.yaml
+          "%MINIKUBE%" kubectl -- apply -f service.yaml
+        ) else (
+          "%MINIKUBE%" kubectl -- apply -f videostore\\deployment.yaml
+          "%MINIKUBE%" kubectl -- apply -f videostore\\service.yaml
+        )
+        "%MINIKUBE%" kubectl -- rollout status deployment/django-deployment
+        '''
+      }
+    }
+
+    stage('Verify Deployment') {
+      steps {
+        bat '''
+        echo Checking running pods and services...
+        "%MINIKUBE%" kubectl -- get pods -o wide
+        "%MINIKUBE%" kubectl -- get svc
+        '''
+      }
+    }
+  }
+}
