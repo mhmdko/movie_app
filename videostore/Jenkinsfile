@@ -1,68 +1,42 @@
 pipeline {
-  agent any
+    agent any
 
-  environment {
-    MINIKUBE = 'C:\\Users\\moham\\minikube.exe'   // full path so PATH isn't needed
-  }
-
-  triggers {
-    pollSCM('H/2 * * * *') // every ~2 minutes
-  }
-
-  stages {
-
-    stage('Show workspace') {
-      steps {
-        bat '''
-        echo ==== ROOT LISTING ====
-        dir
-        if exist videostore (
-          echo ==== videostore/ LISTING ====
-          dir videostore
-        )
-        '''
-      }
+    triggers {
+        // Poll GitHub every 2 minutes
+        pollSCM('H/2 * * * *')
     }
 
-    stage('Build Docker Image') {
-      steps {
-        bat '''
-        echo Building Django image...
-        if exist Dockerfile (
-          docker build -t mydjangoapp:latest .
-        ) else (
-          docker build -t mydjangoapp:latest -f videostore\\Dockerfile videostore
-        )
-        echo Loading image into Minikube...
-        "%MINIKUBE%" image load mydjangoapp:latest
-        '''
-      }
-    }
+    stages {
 
-    stage('Deploy to Minikube') {
-      steps {
-        bat '''
-        echo Applying Kubernetes manifests...
-        if exist deployment.yaml (
-          "%MINIKUBE%" kubectl -- apply -f deployment.yaml
-          "%MINIKUBE%" kubectl -- apply -f service.yaml
-        ) else (
-          "%MINIKUBE%" kubectl -- apply -f videostore\\deployment.yaml
-          "%MINIKUBE%" kubectl -- apply -f videostore\\service.yaml
-        )
-        "%MINIKUBE%" kubectl -- rollout status deployment/django-deployment
-        '''
-      }
-    }
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'YOUR GITHUB URL'
+            }
+        }
 
-    stage('Verify Deployment') {
-      steps {
-        bat '''
-        echo Checking running pods and services...
-        "%MINIKUBE%" kubectl -- get pods -o wide
-        "%MINIKUBE%" kubectl -- get svc
-        '''
-      }
+        stage('Build in Minikube Docker') {
+            steps {
+                bat '''
+                    REM === Switch Docker to Minikube Docker ===
+                    call minikube docker-env --shell=cmd > docker_env.bat
+                    call docker_env.bat
+
+                    REM === Build Django image inside Minikube Docker ===
+                    docker build -t mydjangoapp:latest .
+                '''
+            }
+        }
+
+        stage('Deploy to Minikube') {
+            steps {
+                bat '''
+                    REM === Apply the updated deployment manifest ===
+                    kubectl apply -f deployment.yaml
+
+                    REM === Ensure the rollout completes ===
+                    kubectl rollout status deployment/django-deployment
+                '''
+            }
+        }
     }
-  }
 }
