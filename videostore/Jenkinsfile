@@ -10,7 +10,7 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'YOUR GITHUB URL'
+                git branch: 'main', url: 'https://github.com/mhmdko/movie_app'
             }
         }
 
